@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function cron_cache_menu() {
+  $items = array();
+
+  $items['admin/config/development/performance/cron-cache'] = array(
+    'title' => 'Cron Cache',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cron_cache_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'cron_cache.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function cron_cache_menu_alter(&$items) {
+  $items['admin/config/development/performance/system'] = $items['admin/config/development/performance'];
+  $items['admin/config/development/performance/system']['type'] = MENU_DEFAULT_LOCAL_TASK;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function cron_cache_theme() {
+  return array(
+    'cron_cache_settings_form' => array(
+      'render element' => 'form',
+      'file' => 'cron_cache.admin.inc',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function cron_cache_cron() {
+  $settings = variable_get('cron_cache_settings', array());
+  $core = array('cache', 'cache_path', 'cache_filter', 'cache_form', 'cache_menu', 'cache_page');
+  $cache_tables = array_merge(module_invoke_all('flush_caches'), $core);
+
+  foreach ($cache_tables as $key => $cache) {
+    $result = db_query('SELECT last_run FROM {cron_cache} WHERE bin = :bin', array(':bin' => $cache));
+    if (!$result->rowCount()) {
+      $last_run = db_insert('cron_cache')
+                    ->fields(array(
+                      'bin' => $cache,
+                      'last_run' => 0
+                    ))
+                    ->execute();
+    }
+    else {
+      $last_run = $result->fetchCol();
+    }
+    if (isset($settings[$cache])) {
+      if ($settings[$cache][72]) {
+        if ($last_run < (REQUEST_TIME - (3600 * 72))) {
+          cache_clear_all('*', $cache, TRUE);
+          db_update('cron_cache')->fields(array('last_run' => REQUEST_TIME))->condition('bin', $cache)->execute();
+        }
+      }
+      if ($settings[$cache][48]) {
+        if ($last_run < (REQUEST_TIME - (3600 * 48))) {
+          cache_clear_all('*', $cache, TRUE);
+          db_update('cron_cache')->fields(array('last_run' => REQUEST_TIME))->condition('bin', $cache)->execute();
+        }
+      }
+      if ($settings[$cache][36]) {
+        if ($last_run < (REQUEST_TIME - (3600 * 36))) {
+          cache_clear_all('*', $cache, TRUE);
+          db_update('cron_cache')->fields(array('last_run' => REQUEST_TIME))->condition('bin', $cache)->execute();
+        }
+      }
+      if ($settings[$cache][24]) {
+        if ($last_run < (REQUEST_TIME - (3600 * 24))) {
+          cache_clear_all('*', $cache, TRUE);
+          db_update('cron_cache')->fields(array('last_run' => REQUEST_TIME))->condition('bin', $cache)->execute();
+        }
+      }
+    }
+  }
+
+}

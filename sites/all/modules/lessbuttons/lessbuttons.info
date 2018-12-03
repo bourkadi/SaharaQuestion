@@ -1,0 +1,14 @@
+name = LessButtons
+description = Add the <a href="https://lessbuttons.com/">LessButtons</a> widget. Social media share and bookmark buttons with integrated analytics.
+core = 7.x
+package = Sharing
+configure = admin/config/user-interface/lessbuttons
+files[]= lessbuttons.module
+version = "7.x-1.1"
+
+; Information added by Drupal.org packaging script on 2014-09-23
+version = "7.x-1.1"
+core = "7.x"
+project = "lessbuttons"
+datestamp = "1411488229"
+

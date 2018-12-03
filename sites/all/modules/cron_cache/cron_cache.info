@@ -1,0 +1,10 @@
+name = Cron Cache
+description = Allows configuration of specific caches to be flushed on a scheduled basis
+core = 7.x
+configure = admin/config/development/performance/cron-cache
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "cron_cache"
+datestamp = "1380568083"
+

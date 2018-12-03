@@ -1,0 +1,297 @@
+<?php
+/**
+* Implements hook_help.
+*
+* Displays help and module information.
+*
+* @param path 
+*   Which path of the site we're using to display help
+* @param arg
+*   Array that holds the current path as returned from arg() function
+*/
+function lessbuttons_help($path, $arg) {
+   global $base_url;
+  switch ($path) {
+    case 'admin/config/user-interface/lessbuttons':
+      return '<p>' . t('Choose the widget appearance and services for using <a href="@lessbuttons">LessButtons</a> to share content online.', array('@lessbuttons' => 'https://lessbuttons.com')) . '</p>';
+      break;
+    case "admin/help#lessbuttons":
+      $return_value = "<p>" . t("This plugin places the LessButtons widget on each node.page.") . '</p>';
+      $return_value .= "<p>" . t('For various configuration options please got to <a href="@lessbuttons">the settings page</a>.', array('@lessbuttons' => url('admin/config/user-interface/lessbuttons'))) . '</p>';
+      $return_value .= '<p>' . t('For more information, please visit <a href="@help">lessbuttons.com</a>.', array('@help' => 'https://lessbuttons.com/plugins/drupal/')) . '</p>';
+      return $return_value;
+      break;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function lessbuttons_permission() {
+  return array(
+    'administer lessbuttons' => array(
+      'title' => t('Administer LessButtons'),
+      'description' => t('Change the settings for how LessButtons behaves on the site.'),
+    ),
+  );
+}
+
+/**
+* Implements hook_menu.
+*/
+function lessbuttons_menu() {
+  $items = array();
+
+  $items['admin/config/user-interface/lessbuttons'] = array(
+    'title' => 'LessButtons',
+    'description' => 'Configuration for LessButtons module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('lessbuttons_configuration_form'),
+    'access arguments' => array('administer lessbuttons'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+ /**
+ * This is the main configuration form for the admin page.
+ */
+function lessbuttons_configuration_form($form, &$form_state) {
+  // First, setup variables we will need.
+  // Get the path variables setup.
+  $my_path = drupal_get_path('module', 'lessbuttons');
+  // Load the css and js for our module's configuration.
+  drupal_add_css($my_path . '/lessbuttons.admin.css');
+  drupal_add_js($my_path . '/lessbuttons.admin.js');
+  
+  $current_options_array = lessbuttons_get_options_array();
+  
+  $pfx = '<div style="width: 330px; height: 220px; margin-top: 30px;">
+<iframe class="lessbuttons-scaled-frame" id="lessbuttons_code_iframe" width="200%" height="200%" style="padding: 0px; margin: 0px; border: 1px solid black;" src=""></iframe>
+</div>';
+  
+  $form['additional_settings'] = array(
+    '#type' => 'vertical_tabs',
+    '#prefix' => $pfx,
+  );
+  
+  $form['appearance'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Appearance'),
+    '#group' => 'additional_settings',
+    '#description' => t('Configure how the LessButtons widget should appear.'),
+  );
+
+  $form['appearance']['lessbuttons_placement_outside'] = array(
+    '#title' => t('Placement on website'),
+    '#type' => 'radios',
+    '#options' => array(
+      'left' => t('Left'),
+      'right' => t('Right'),
+      'bottom' => t('Bottom'),
+    ),
+    '#attributes' => array('onclick' => 'lessbuttons_gCode();'),
+    '#default_value' => variable_get('lessbuttons_placement_outside', 'left'),
+  );
+  
+  $form['appearance']['lessbuttons_placement_inside'] = array(
+    '#title' => t('Inside individual nodes'),
+    '#type' => 'radios',
+    '#options' => array(
+      'inline_other' => t('As rest'),
+      'inline_before' => t('Inline'),
+    ),
+    '#default_value' => variable_get('lessbuttons_placement_inside', 'inline_other'),
+  );
+  
+  $form['appearance']['lessbuttons_placement_onmobile'] = array(
+    '#title' => t('On mobile devices'),
+    '#type' => 'radios',
+    '#options' => array(
+      'rest' => t('As rest'),
+      'bottom' => t('Bottom'),
+      'hide' => t('Hide'),
+    ),
+    '#default_value' => variable_get('lessbuttons_placement_onmobile', 'bottom'),
+  );
+  
+  $form['appearance']['lessbuttons_weight'] = array(
+    '#title' => t('Weight'),
+    '#description' => t('The weight of the widget determines the location on the page where it will appear. Use -10 to display before content.'),
+    '#required' => FALSE,
+    '#type' => 'textfield',
+    '#default_value' => variable_get('lessbuttons_weight', '10'),
+  );   
+     
+  $form['appearance']['lessbuttons_zindex'] = array(
+    '#title' => t("Z-index"),
+    '#description' => t("Above or below of other content."),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('lessbuttons_zindex', '100501'),
+  );
+
+  $socTitles = array ("facebook" => array ("title" => "Facebook"), "twitter" => array ("title" => "Twitter"), "googleplus" => array ("title" => "Google+"), "linkedin" => array ("title" => "LinkedIn"), "pinterest" => array ("title" => "Pinterest"), "reddit" => array ("title" => "Reddit"), "vkontakte" => array ("title" => "VKontakte"), "odnoklassniki" => array ("title" => "Odnoklassniki"), "email" => array ("title" => "Email"), "printfriendly" => array ("title" => "Printfriendly"), "googlebookmarks" => array ("title" => "Google"), "gmail" => array ("title" => "Gmail"), "outlook" => array ("title" => "Outlook"), "yahoomail" => array ("title" => "Yahoo mail"), "aolmail" => array ("title" => "AOL mail"), "mailru" => array ("title" => "MoiMir"), "baidu" => array ("title" => "Baidu"), "tumblr" => array ("title" => "Tumblr"), "blogger" => array ("title" => "Blogger"), "livejournal" => array ("title" => "Livejournal"), "stumbleupon" => array ("title" => "StumbleUpon"), "rediff" => array ("title" => "Rediff"), "taringa" => array ("title" => "Taringa"), "douban" => array ("title" => "Douban"), "xing" => array ("title" => "Xing"), "evernote" => array ("title" => "Evernote"), "digg" => array ("title" => "Digg"), "typepad" => array ("title" => "Typepad"), "scoopit" => array ("title" => "Scoop.it"), "bufferapp" => array ("title" => "Bufferapp"), "myspace" => array ("title" => "Myspace"), "mixi" => array ("title" => "Mixi"), "delicious" => array ("title" => "Delicious"), "skyrock" => array ("title" => "Skyrock"), "friendfeed" => array ("title" => "Friendfeed"), "diigo" => array ("title" => "Diigo"), "meneame" => array ("title" => "Meneame"), "dzone" => array ("title" => "Dzone"), "fark" => array ("title" => "Fark"), "folkd" => array ("title" => "Folkd"), "netlog" => array ("title" => "Netlog"), "bitly" => array ("title" => "Bit.ly"), "care2" => array ("title" => "Care2"), "n4g" => array ("title" => "N4g"), "kaixin001" => array ("title" => "Kaixin001"), "wanelo" => array ("title" => "Wanelo"), "myvidster" => array ("title" => "Myvidster"), "draugiem" => array ("title" => "Draugiem"), "newsvine" => array ("title" => "Newsvine"), "jappy" => array ("title" => "Jappy"), "pdfonline" => array ("title" => "PDF Online"), "orkut" => array ("title" => "Orkut"), "surfingbird" => array ("title" => "Surfingbird"), "tuenti" => array ("title" => "Tuenti"), "sulia" => array ("title" => "Sulia"), "bizsugar" => array ("title" => "Bizsugar"), "blinklist" => array ("title" => "Blinklist"), "nujij" => array ("title" => "Nujij"), "youmob" => array ("title" => "Youmob"), "vkrugudruzei" => array ("title" => "vKruguDruzei"), "moikrug" => array ("title" => "MoiKrug"), "sodahead" => array ("title" => "SodaHead"), "sonico" => array ("title" => "Sonico"), "instapaper" => array ("title" => "Instapaper"), "taaza" => array ("title" => "Taaza"), "newsmeback" => array ("title" => "Newsmeback"), "citeulike" => array ("title" => "Citeulike"), "tapiture" => array ("title" => "Tapiture"), "buddymarks" => array ("title" => "Buddymarks"), "safelinking" => array ("title" => "Safelinking"), "diggita" => array ("title" => "Diggita"), "dudu" => array ("title" => "Dudu"), "fwisp" => array ("title" => "Fwisp"), "efactor" => array ("title" => "Efactor"), "gg" => array ("title" => "Gg"), "kaboodle" => array ("title" => "Kaboodle"), "startaid" => array ("title" => "Startaid"), "svejo" => array ("title" => "Svejo"), "plaxo" => array ("title" => "Plaxo"), "blurpalicious" => array ("title" => "Blurpalicious"), "misterwong" => array ("title" => "Mister wong"), "jumptags" => array ("title" => "Jumptags"), "fashiolista" => array ("title" => "Fashiolista"), "informazione" => array ("title" => "Informazione"), "bobrdobr" => array ("title" => "Bobrdobr"), "ziczac" => array ("title" => "Ziczac"), "thisnext" => array ("title" => "Thisnext"), "webnews" => array ("title" => "Webnews"), "mendeley" => array ("title" => "Mendeley"), "netvouz" => array ("title" => "Netvouz"), "origo" => array ("title" => "Origo"), "box" => array ("title" => "Box"), "blogmarks" => array ("title" => "Blogmarks"), "govn" => array ("title" => "Go.vn"), "tvinx" => array ("title" => "Tvinx"), "bookmerken" => array ("title" => "Bookmerken"), "balltribe" => array ("title" => "Balltribe"), "upnews" => array ("title" => "Upnews"), "stuffpit" => array ("title" => "Stuffpit"), "wirefan" => array ("title" => "Wirefan"), "ihavegot" => array ("title" => "Ihavegot"), "moemesto" => array ("title" => "Moemesto"), "me2day" => array ("title" => "Me2day"), "transferr" => array ("title" => "Transferr"), "beat100" => array ("title" => "Beat100"), "mashbord" => array ("title" => "Mashbord"), "domelhor" => array ("title" => "Domelhor"), "thrillon" => array ("title" => "Thrillon"), "100zakladok" => array ("title" => "100zakladok"), "posteezy" => array ("title" => "Posteezy"), "arto" => array ("title" => "Arto"), "ekudos" => array ("title" => "Ekudos"), "blogkeen" => array ("title" => "Blogkeen"), "identi" => array ("title" => "Identi"), "favoritus" => array ("title" => "Favoritus"), "linkshares" => array ("title" => "Linkshares"), "extraplay" => array ("title" => "Extraplay"), "iorbix" => array ("title" => "Iorbix"), "goodnoows" => array ("title" => "Goodnoows"), "scoopat" => array ("title" => "Scoop.at"));
+
+  $form['soc_list'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Buttons'),
+    '#group' => 'additional_settings',
+    '#description' => t('Configure what services will be displayed by LessButtons widget.'),
+  );
+  
+  $form['soc_list']['lessbuttons_placement_custom_buttons']["#tree"] = TRUE;
+  
+  $lbCnt = 0; 
+  foreach ($socTitles as $k => $st) {    
+    $prefix = '
+    <div class="lessbuttons_sp_1">
+    <div class="lessbuttons_sp_2" style="background-position: 0 -'.($lbCnt*32).'px;">
+    </div>
+    <div class="lessbuttons_sp_3">
+    '.t($st ['title']).'
+    </div>
+    <div class="lessbuttons_sp_4">';
+    $suffix = '</div></div>';
+    if ($lbCnt < 8) {
+      $optsA = array('0' => t('Off'),'1' => t('On'),'auto' => t('Auto'),);
+    } else {
+      $optsA = array('0' => t('Off'),'1' => t('On'),);
+    }
+    
+    $dv = '0';
+    if (is_array ($current_options_array ['lessbuttons_placement_custom_buttons']) && array_key_exists ($k, $current_options_array ['lessbuttons_placement_custom_buttons'])) {
+      if ($current_options_array ['lessbuttons_placement_custom_buttons'] [$k] == '1') $dv = '1';
+      if ($current_options_array ['lessbuttons_placement_custom_buttons'] [$k] == 'auto') $dv = 'auto';
+    }
+
+    $form['soc_list']['lessbuttons_placement_custom_buttons'] [$k] = array(
+      '#type' => 'radios',
+      '#prefix' => $prefix,
+      '#suffix' => $suffix,
+      '#options' => $optsA,
+      '#attributes' => array('onclick' => 'lessbuttons_gCode();'),
+      '#default_value' => $dv,
+    );
+    $lbCnt ++;
+  }
+  
+  return system_settings_form($form);
+}
+
+/**
+ * lessbuttons_get_options_array is a helper function for DB access.
+ *
+ * Returns options that have been stored in the database.
+ *
+ * @TODO: Switch from this function to just straight variable_get() calls.
+ */
+function lessbuttons_get_options_array() {
+
+  $def = array ("facebook" => "1", "twitter" => "1", "googleplus" => "1", "linkedin" => "auto",
+	 "pinterest" => "auto", "reddit" => "auto", "vkontakte" => "auto", "odnoklassniki" => "auto", );
+   
+  return array (
+    'lessbuttons_placement_outside' => variable_get ('lessbuttons_placement_outside', 'left'),
+    'lessbuttons_placement_inside' => variable_get ('lessbuttons_placement_inside', 'inline_other'),
+    'lessbuttons_placement_onmobile' => variable_get ('lessbuttons_placement_onmobile', 'bottom'),
+    'lessbuttons_zindex' => variable_get ('lessbuttons_zindex', '100501'),
+    'lessbuttons_weight' => variable_get ('lessbuttons_weight', '10'),
+    'lessbuttons_placement_custom_buttons' => variable_get ('lessbuttons_placement_custom_buttons', $def),
+  );
+}
+
+
+/**
+ * Form validation handler for lessbuttons_configuration_form().
+ */
+function lessbuttons_configuration_form_validate($form, &$form_state) {
+  //Additional filters for the option input
+  $form_state['values']['lessbuttons_weight'] = (isset($form_state['values']['lessbuttons_weight'])) ? $form_state['values']['lessbuttons_weight'] : '10';
+}
+
+/**
+ * Form submission handler for lessbuttons_configuration_form().
+ */
+function lessbuttons_configuration_form_submit($form, &$form_state) {
+  // If the location is changing to/from 'content', clear the Field Info cache.
+  
+  if (variable_get('lessbuttons_placement_outside', 'left') != $form_state['values']['lessbuttons_placement_outside']
+    || variable_get('lessbuttons_placement_inside', 'inline_other') != $form_state['values']['lessbuttons_placement_inside']
+    || variable_get('lessbuttons_placement_onmobile', 'bottom') != $form_state['values']['lessbuttons_placement_onmobile']
+    ) {
+    cache_clear_all ();
+  }
+}
+
+
+ /**
+ * Implements hook_node_view().
+ *
+ * Inserts Lessbuttons widget code onto each node view.
+ *
+ * @param node
+ *   The node that is being acted upon
+ * @param view_mode
+ *   The type of view (teaser, full, etc)
+ * @param langcode
+ *   Information about the language
+ */
+function lessbuttons_node_view($node, $view_mode, $langcode) {
+  // Don't display if the user is currently in the RSS feed.
+  switch ($view_mode) {
+    case 'rss':
+      return;
+  }
+  // First get all of the options for the lessbuttons widget from the database:
+  $data_options = lessbuttons_get_options_array();
+
+  if ($view_mode == 'full' && $data_options ['lessbuttons_placement_inside'] == 'inline_before') {
+    $node->content['lessbuttons'] = array(
+      '#markup' => '<div id="lessbuttons_holder"></div>',
+      '#weight' => intval(variable_get('lessbuttons_weight', 10)),
+    );
+    $isInline = true;
+  } else {
+    $isInline = false;
+  }
+  
+  $s = serialize (drupal_add_js(NULL, NULL, NULL));
+  if (!strstr ($s, "lessbuttons")) {
+    drupal_add_js (lessbuttons_produceWidget($data_options, $isInline), array ('type' => 'external', 'defer' => TRUE, 'scope' => 'footer', 'weight' => 1));
+  }
+}
+
+/**
+ * Produce LessButtons widget call
+ */
+function lessbuttons_produceWidget ($data_options, $isInline) {
+   $params = array ();
+   if ($isInline) {
+      $params []= "position=inline";
+   } else {
+      if ($data_options ["lessbuttons_placement_outside"] == "left") $params []= "position=left";
+      if ($data_options ["lessbuttons_placement_outside"] == "right") $params []= "position=right";
+      if ($data_options ["lessbuttons_placement_outside"] == "bottom") $params []= "position=bottom";
+   }
+   
+   if ($data_options ["lessbuttons_placement_onmobile"] == "bottom") $params []= "onmobile=bottom";
+   if ($data_options ["lessbuttons_placement_onmobile"] == "hide") $params []= "onmobile=hide";
+   
+   if (is_array ($data_options ['lessbuttons_placement_custom_buttons'])) {
+     foreach ($data_options ['lessbuttons_placement_custom_buttons'] as $k => $v) {
+       if ($v == '1' || $v == 'auto') {
+         $params []= urlencode ($k) . '=' . urlencode ($v);
+       }
+     }
+   }
+   
+   $params []= "zindex=" . intval ($data_options ["lessbuttons_placement_onmobile"]);
+   
+   $u = "https://lessbuttons.com/script.js";
+   if (count ($params) > 0) {
+      $u .= "?" . join ("&", $params);
+   }
+   
+   return $u;
+}
+

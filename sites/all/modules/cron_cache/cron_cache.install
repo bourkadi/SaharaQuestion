@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function cron_cache_schema() {
+  $schema = array();
+  $schema['cron_cache'] = array(
+    'fields' => array(
+      'bin' => array(
+        'type'     => 'varchar',
+        'length'   => 255,
+        'not null' => TRUE,
+        'default'  => '',
+      ),
+      'last_run' => array(
+        'type'     => 'int',
+        'size'     => 'big',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default'  => 0,
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function cron_cache_uninstall() {
+  variable_del('cron_cache_settings');
+}

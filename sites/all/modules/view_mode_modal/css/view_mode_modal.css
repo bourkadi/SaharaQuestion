@@ -1,0 +1,43 @@
+/**
+ * @file
+ * CSS for View Mode Modal module
+ */
+.view-mode-target-wrapper {
+  cursor:pointer;
+  position:relative;
+  background:#F6F6F6;
+}
+
+.view-mode-target-link {
+  position:absolute;
+  display:block;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  background:none;
+  text-indent:-9999px;
+  font-size:0;
+  line-height:0;
+}
+
+.ctools-modal-content.view-mode-modal {
+  border: none;
+  box-shadow: 0 0 5px #888;
+  -moz-box-shadow: 0 0 5px #888;
+  -webkit-box-shadow: 0 0 5px #888;
+  overflow: hidden;
+}
+
+.ctools-modal-content.view-mode-modal .modal-header {
+  padding: 10px 15px;
+  min-height: 30px;
+}
+
+.ctools-modal-content.view-mode-modal .modal-header h3 {
+  margin: 0;
+}
+
+.ctools-modal-content.view-mode-modal .modal-header a.close {
+  font-size: 20px;
+}

@@ -1,0 +1,60 @@
+<?php
+
+/**
+ * @file
+ * Provides a field formatter for "long text and summary" fields.
+ */
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function text_with_summary_field_formatter_info() {
+  return array(
+    'text_with_summary' => array(
+      'label' => t('Text with summary'),
+      'field types' => array('text_with_summary'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function text_with_summary_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  foreach ($items as $delta => $item) {
+    $element[$delta] = array(
+      '#theme' => 'text_with_summary',
+      '#instance' => $instance,
+      '#langcode' => $langcode,
+      '#item' => $item,
+    );
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function text_with_summary_theme() {
+  return array(
+    'text_with_summary' => array(
+      'variables' => array(
+        'instance' => NULL,
+        'langcode' => NULL,
+        'item' => NULL,
+      ),
+      'template' => 'text_with_summary',
+    ),
+  );
+}
+
+/**
+ * Process variables for text_with_summary.tpl.php
+ */
+function template_preprocess_text_with_summary(&$variables) {
+  if (!empty($variables['item']['summary'])) {
+    $variables['safe_summary'] = _text_sanitize($variables['instance'], $variables['langcode'], $variables['item'], 'summary');
+  }
+  $variables['safe_value'] = _text_sanitize($variables['instance'], $variables['langcode'], $variables['item'], 'value');
+}
